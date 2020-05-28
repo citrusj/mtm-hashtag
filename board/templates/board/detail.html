@@ -7,6 +7,18 @@
     <h1>{{ post.title }}</h1>
     <p> {{ post.body|linebreaks }}</p>
 </div>
+<p> 
+{% for t in post.tags.all %}
+    <b> #{{t.name}}</b> <a href="{% url 'tag_delete' pk=post.pk tag_pk=t.pk %}">X</a> 
+{%endfor%}
+</p>
+
+<form action="{% url 'tag_add' pk=post.pk %}" method="POST">
+    {% csrf_token %}
+    {{tag_form.name}}
+    <input type="submit" value="해시태그 추가">
+</form>
+
 <hr>
 <a href="{% url 'edit' pk=post.pk %}">수정하기</a>
 <a href="{% url 'delete' pk=post.pk %}">삭제하기</a><br><br>

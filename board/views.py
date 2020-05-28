@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
-from .models import Content, Comment
+from .models import Content, Comment, Tag
 from django.utils import timezone
-from .forms import ContentForm, CommentForm
+from .forms import ContentForm, CommentForm, TagForm
 from django.shortcuts import get_object_or_404
 
 # Create your views here.
@@ -36,9 +36,10 @@ def detail(request, pk):
             return redirect('detail', pk=pk)
     else:
         comment_form = CommentForm()
+        tag_form = TagForm()
 
     return render(request, 'board/detail.html', {'post': post, 
-    'comments':comments, 'comment_form':comment_form})
+    'comments':comments, 'comment_form':comment_form, 'tag_form':tag_form})
 
 def edit(request, pk):
     post = get_object_or_404(Content, pk=pk)
@@ -62,4 +63,30 @@ def delete(request, pk):
 def delete_comment(request, pk, comment_pk):
     comment = get_object_or_404(Comment,pk=comment_pk)
     comment.delete()
+    return redirect('detail', pk=pk)
+
+def tag_add(request, pk):
+    post = get_object_or_404(Content, pk=pk)
+    tag_form = TagForm(request.POST)
+    if tag_form.is_valid():
+        tag = tag_form.save(commit=False)
+        tag, created = Tag.objects.get_or_create(name=tag.name)
+        post.tags.add(tag)
+        return redirect('detail',pk=pk)
+
+def tag_home(request):
+    tags = Tag.objects.all()
+    return render(request, 'board/tag.html', {'tags':tags})
+
+def tag_detail(request, pk):
+    tag = get_object_or_404(Tag, pk=pk)
+    tag_posts = tag.content_set.all() 
+    return render(request, 'board/tag_detail.html',{'tag':tag, 'tag_posts':tag_posts})
+
+def tag_delete(request, pk, tag_pk):
+    post = get_object_or_404(Content, pk=pk)
+    tag = get_object_or_404(Tag, pk=tag_pk)
+    post.tags.remove(tag)
+    if tag.content_set.count()==0:
+        tag.delete()
     return redirect('detail', pk=pk)
